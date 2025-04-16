@@ -89,19 +89,19 @@ void fixInsert(Node*& root, Node*& x) {
     while (x != root && x->parent->color == true) { // While x is not the root and its parent's color is RED
         Node* grandparent = x->parent->parent;
 
-        // parent is a left child
+        // Case 1: x's parent is a left child
         if (x->parent == grandparent->left) {
             Node* uncle = grandparent->right;
 
-            
-            if (uncle != nullptr && uncle->color == true) { //uncle is red
+            // Case 1a: Uncle is RED
+            if (uncle != nullptr && uncle->color == true) {
                 x->parent->color = false; // Parent BLACK
                 uncle->color = false;     // Uncle BLACK
-                grandparent->color = true; // grandpa RED
+                grandparent->color = true; // Grandparent RED
                 x = grandparent; 
             }
             
-            else { 
+            else { //Uncle BLACK or NULL
                 if (x == x->parent->right) {
                     x = x->parent;
                     rotateLeft(root, x);
@@ -137,20 +137,36 @@ void fixInsert(Node*& root, Node*& x) {
 }
 
 Node* insert(Node* root, int value) {
+    Node* newNode = new Node(value); 
+    
     if (root == nullptr) {
-        Node* newNode = new Node(value);
-        
         newNode->color = false;  // Black
         return newNode;
     }
+    
+    Node* current = root;
+    Node* parent = nullptr;
+    
+    while (current != nullptr) {
+        parent = current;
 
-    if (value < root->data) {
-        root->left = insert(root->left, value);
-    } else {
-        root->right = insert(root->right, value);
+        if (value < current->data) {
+            current = current->left;
+        } else {
+            current = current->right;
+        }
     }
 
-    fixInsert(root, root->right);
+    if (value < parent->data) {
+        parent->left = newNode;
+    } else {
+        parent->right = newNode;
+    }
+
+    newNode->parent = parent;
+
+    fixInsert(root, newNode);
+
     return root;
 }
 
@@ -235,6 +251,7 @@ void printTree(Node* root, int depth = 0) { //prints tree similar to heap
 void filess(Node*& root) {
     ifstream file("numbers.txt");
     int value;
+    
     while (file >> value) {
         if (value >= 1 && value <= 999) {
             root = insert(root, value);
