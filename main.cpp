@@ -1,9 +1,11 @@
 //Eyasu Berehanu
-//3/30/2025
-//This is a binary search tree which allows you to insert values, read values from a file, delte values, and search up values in the bianry search tree 
+//4/18/2025
+//This is a red black tree, a binary search tree that balances itselfwhich allows you to insert values, read values from a file, delte values, and search up values in the bianry search tree 
 //Sources:
 //Some help from my brother with getsuccessor, 
-//Geeksforgeeks on helping how to learn how to do insert, search and delte 
+//Geeksforgeeks on helping how to learn how to do left and right, and fix insert
+//Michal Sambol - Red Black tree under 5min explation
+//Red black tree visualizer
 //Mr Galbrith assistances on print from past heap project
 #include <iostream>
 #include <fstream>
@@ -35,9 +37,13 @@ Node* remove(Node* root, int value);
 Node* getSuccessor(Node* cur); 
 Node* search(Node* root, int value);
 void fixInsert(Node*& root, Node*& x);
+void rotateLeft(Node*& root, Node*& x);
+void rotateRight(Node*& root, Node*& x);
 
-void rotateLeft(Node*& root, Node*& x) {
-    Node* y = x->right;
+
+void rotateLeft(Node*& root, Node*& x) { //does left rotation on a given node
+
+    Node* y = x->right; // y to xs right child
     x->right = y->left;
     if (y->left != nullptr) {
         y->left->parent = x;
@@ -49,10 +55,10 @@ void rotateLeft(Node*& root, Node*& x) {
         root = y;  // x was the root
         
     } else if (x == x->parent->left) {
-        x->parent->left = y;
+        x->parent->left = y; // x was left child so parent's left pointer should change
         
     } else {
-        x->parent->right = y;
+        x->parent->right = y; // x was right child so parent's left pointer should change
         
     }
     
@@ -60,8 +66,8 @@ void rotateLeft(Node*& root, Node*& x) {
     x->parent = y;
 }
 
-void rotateRight(Node*& root, Node*& x) {
-    Node* y = x->left;
+void rotateRight(Node*& root, Node*& x) { //does right rotation on a given node
+    Node* y = x->left; // y to xs lefty child
     x->left = y->right;
     if (y->right != nullptr) {
         y->right->parent = x;
@@ -73,11 +79,10 @@ void rotateRight(Node*& root, Node*& x) {
         root = y;  // x was the root
         
     } else if (x == x->parent->right) {
-        x->parent->right = y;
+        x->parent->right = y; // x was right child so parent's left pointer should change
         
     } else {
-        x->parent->left = y;
-        
+        x->parent->left = y; // x was left child so parent's left pointer should change
     }
     
     y->right = x;
@@ -89,11 +94,10 @@ void fixInsert(Node*& root, Node*& x) {
     while (x != root && x->parent->color == true) { // While x is not the root and its parent's color is RED
         Node* grandparent = x->parent->parent;
 
-        // Case 1: x's parent is a left child
+        //x's parent is a left child
         if (x->parent == grandparent->left) {
             Node* uncle = grandparent->right;
-
-            // Case 1a: Uncle is RED
+	    //Uncle is RED
             if (uncle != nullptr && uncle->color == true) {
                 x->parent->color = false; // Parent BLACK
                 uncle->color = false;     // Uncle BLACK
@@ -101,7 +105,7 @@ void fixInsert(Node*& root, Node*& x) {
                 x = grandparent; 
             }
             
-            else { //Uncle BLACK or NULL
+        else { //Uncle BLACK or NULL
                 if (x == x->parent->right) {
                     x = x->parent;
                     rotateLeft(root, x);
@@ -113,7 +117,7 @@ void fixInsert(Node*& root, Node*& x) {
         }
         
         else { //parent is a right child
-            Node* uncle = grandparent->left;
+              Node* uncle = grandparent->left;
             if (uncle != nullptr && uncle->color == true) { // Uncle is RED
                 x->parent->color = false;
                 uncle->color = false;
@@ -127,7 +131,7 @@ void fixInsert(Node*& root, Node*& x) {
                     rotateRight(root, x);
                 }
                 x->parent->color = false;
-                grandparent->color = true;
+		grandparent->color = true;
                 rotateLeft(root, grandparent);
             }
         }
@@ -137,7 +141,7 @@ void fixInsert(Node*& root, Node*& x) {
 }
 
 Node* insert(Node* root, int value) {
-    Node* newNode = new Node(value); 
+    Node* newNode = new Node(value); //new red node
     
     if (root == nullptr) {
         newNode->color = false;  // Black
@@ -147,13 +151,13 @@ Node* insert(Node* root, int value) {
     Node* current = root;
     Node* parent = nullptr;
     
-    while (current != nullptr) {
+    while (current != nullptr) { //traverese tree to find the right(as in correct) point
         parent = current;
 
         if (value < current->data) {
-            current = current->left;
+            current = current->left; //left for smaller
         } else {
-            current = current->right;
+            current = current->right; //right for bigger
         }
     }
 
@@ -163,7 +167,7 @@ Node* insert(Node* root, int value) {
         parent->right = newNode;
     }
 
-    newNode->parent = parent;
+    newNode->parent = parent; //connects new node to tree
 
     fixInsert(root, newNode);
 
@@ -237,14 +241,19 @@ void printTree(Node* root, int depth = 0) { //prints tree similar to heap
     for (int i = 0; i < depth; i++) {
         cout << "   ";
     }
-    cout << root->data << " (";
+    cout << root->data << " ("; //states the color a node is in in the program
         if (root->color == true) {
             cout << "R";
         } else {
             cout << "B";
         }
+        if (root->parent != nullptr) {
+        cout << " P:" << root->parent->data; //then states that nodes parents
+    }
+    
     cout << ")" << endl;
     
+     
     printTree(root->left, depth + 1);  //uses recurtion to print left sideof a tree
 }
 
