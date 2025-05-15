@@ -39,7 +39,7 @@ Node* search(Node* root, int value);
 void fixInsert(Node*& root, Node*& x);
 void rotateLeft(Node*& root, Node*& x);
 void rotateRight(Node*& root, Node*& x);
-
+void fixDelete(Node*& root, Node*& x, Node* xParent);
 
 void rotateLeft(Node*& root, Node*& x) { //does left rotation on a given node
 
@@ -183,6 +183,86 @@ Node* getSuccessor(Node* cur) { //finds the next large node or the successor of 
         cur = cur->left;
     }
     return cur;
+}
+
+void fixDelete(Node*& root, Node*& x, Node* xparent) {
+    while (x != root && (x == nullptr || x->color == false)) {
+        
+        if (x == xparent->left) {
+            Node* sib = xparent->right;
+            
+            if (sib != nullptr && sib->color == true) {
+                sib->color = false;
+                xparent->color = true;
+                rotateLeft(root, xparent);
+                sib = xparent->right;
+            }
+
+            if ((sib->left == nullptr || sib->left->color == false) && (sib->right == nullptr || sib->right->color == false)) {
+                sib->color = true;
+                x = xparent;
+                xparent = x->parent;
+            }
+            else {
+                if (sib->right == nullptr || sib->right->color == false) {
+                    
+                    if (sib->left != nullptr) {
+                        sib->left->color = false;
+                    }
+                    sib->color = true;
+                    rotateRight(root, sib);
+                    sib = xparent->right;
+                }
+                sib->color = xparent->color;
+                xparent->color = false;
+                
+                if (sib->right != nullptr) {
+                    sib->right->color = false;
+                }
+                rotateLeft(root, xparent);
+                sib = root;
+                break;
+            }
+        }
+        else {
+            Node* sib = xparent->left;
+            if (sib != nullptr && sib->color == true) {
+                sib->color = false;
+                xparent->color = true;
+                rotateRight(root, xparent);
+                sib = xparent->left;
+            }
+
+            if ((sib->left == nullptr || sib->left->color == false) && (sib->right == nullptr || sib->right->color == false)) {
+                sib->color = true;
+                x = xparent;
+                xparent = x->parent;
+            }
+            else {
+                if (sib->left == nullptr || sib->left->color == false) {
+                    
+                    if (sib->right != nullptr) {
+                        sib->right->color = false;
+                    }
+                    sib->color = true;
+                    rotateLeft(root, sib);
+                    sib = xparent->left;
+                }
+                sib->color = xparent->color;
+                xparent->color = false;
+                
+                if (sib->left != nullptr) {
+                    sib->left->color = false;
+                }
+                rotateRight(root, xparent);
+                x = root;
+                break;
+            }
+        }
+    }
+    if (x != nullptr) {
+        x->color = false;
+    }
 }
 
 Node* remove(Node* root, int value) { //removes node that was ask to be removed in the bianry search tree
