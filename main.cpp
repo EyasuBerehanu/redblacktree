@@ -7,6 +7,9 @@
 //Michal Sambol - Red Black tree under 5min explation
 //Red black tree visualizer
 //Mr Galbrith assistances on print from past heap project
+//for fix delelte and update remove: https://www.geeksforgeeks.org/deletion-in-red-black-tree/#, 
+//https://brilliant.org/wiki/red-black-tree/, wikpida red black tree explained
+//https://www.youtube.com/watch?v=ZxCvM-9BaXE
 #include <iostream>
 #include <fstream>
 #include <cstring>
@@ -39,7 +42,7 @@ Node* search(Node* root, int value);
 void fixInsert(Node*& root, Node*& x);
 void rotateLeft(Node*& root, Node*& x);
 void rotateRight(Node*& root, Node*& x);
-void fixDelete(Node*& root, Node*& x, Node* xParent);
+void fixRemove(Node*& root, Node*& x, Node* xParent);
 
 void rotateLeft(Node*& root, Node*& x) { //does left rotation on a given node
 
@@ -185,26 +188,26 @@ Node* getSuccessor(Node* cur) { //finds the next large node or the successor of 
     return cur;
 }
 
-void fixDelete(Node*& root, Node*& x, Node* xparent) {
-    while (x != root && (x == nullptr || x->color == false)) {
+void fixRemove(Node*& root, Node*& x, Node* xparent) { //fixes violations of the rbt after deletion so it can meet the rules of rbt
+    while (x != root && (x == nullptr || x->color == false)) { //while x is root or is red
         
-        if (x == xparent->left) {
+        if (x == xparent->left) { // x = left chikd
             Node* sib = xparent->right;
             
-            if (sib != nullptr && sib->color == true) {
+            if (sib != nullptr && sib->color == true) { //for when sibling is red
                 sib->color = false;
                 xparent->color = true;
-                rotateLeft(root, xparent);
-                sib = xparent->right;
+                rotateLeft(root, xparent); //use the rotate left made for fixinsert is being used here then we updatre sib
+                sib = xparent->right; 
             }
 
-            if ((sib->left == nullptr || sib->left->color == false) && (sib->right == nullptr || sib->right->color == false)) {
+            if ((sib->left == nullptr || sib->left->color == false) && (sib->right == nullptr || sib->right->color == false)) { //sib is black and the sib childern is also black
                 sib->color = true;
                 x = xparent;
                 xparent = x->parent;
             }
             else {
-                if (sib->right == nullptr || sib->right->color == false) {
+                if (sib->right == nullptr || sib->right->color == false) { //sib is black but now left child is red and right is black 
                     
                     if (sib->left != nullptr) {
                         sib->left->color = false;
@@ -213,7 +216,9 @@ void fixDelete(Node*& root, Node*& x, Node* xparent) {
                     rotateRight(root, sib);
                     sib = xparent->right;
                 }
-                sib->color = xparent->color;
+                
+                
+                sib->color = xparent->color; //when right child is red while sibling is blkack
                 xparent->color = false;
                 
                 if (sib->right != nullptr) {
@@ -224,22 +229,22 @@ void fixDelete(Node*& root, Node*& x, Node* xparent) {
                 break;
             }
         }
-        else {
+        else { //now when x is right child
             Node* sib = xparent->left;
-            if (sib != nullptr && sib->color == true) {
+            if (sib != nullptr && sib->color == true) { //for when sibling is red
                 sib->color = false;
                 xparent->color = true;
                 rotateRight(root, xparent);
                 sib = xparent->left;
             }
 
-            if ((sib->left == nullptr || sib->left->color == false) && (sib->right == nullptr || sib->right->color == false)) {
+            if ((sib->left == nullptr || sib->left->color == false) && (sib->right == nullptr || sib->right->color == false)) {  //sib is black and the sib childern is also black
                 sib->color = true;
                 x = xparent;
                 xparent = x->parent;
             }
             else {
-                if (sib->left == nullptr || sib->left->color == false) {
+                if (sib->left == nullptr || sib->left->color == false) { //sib is black but now right child is red and left is black 
                     
                     if (sib->right != nullptr) {
                         sib->right->color = false;
@@ -248,7 +253,8 @@ void fixDelete(Node*& root, Node*& x, Node* xparent) {
                     rotateLeft(root, sib);
                     sib = xparent->left;
                 }
-                sib->color = xparent->color;
+                //when left child is red while sibling is black
+                sib->color = xparent->color; 
                 xparent->color = false;
                 
                 if (sib->left != nullptr) {
@@ -260,45 +266,118 @@ void fixDelete(Node*& root, Node*& x, Node* xparent) {
             }
         }
     }
-    if (x != nullptr) {
+    if (x != nullptr) { //make sure x is black after fixRemove
         x->color = false;
     }
 }
 
-Node* remove(Node* root, int value) { //removes node that was ask to be removed in the bianry search tree
-    if (root == nullptr) {
-        return nullptr;
+Node* remove(Node* root, int value) { //removes the chose number but now with the logic of rbt implemented, had to use succersor to do this
+    Node* node = root;
+    Node* x = nullptr;          // points to the child that replace deleted node
+    Node* xParent = nullptr;    // need for fixRemove
+    bool firstColor;
+
+    while (node != nullptr && node->data != value) { //looks for node with the number we lookin to delete
+        if (value < node->data) {
+            node = node->left;   // left with smaller num
+        } else {
+            node = node->right;  // right with larger num
+        }
     }
 
-    if (value < root->data) { 
-        root->left = remove(root->left, value); //uses recurtion to remove the node from left if smaller value
-    } else if (value > root->data) { 
-        root->right = remove(root->right, value); //uses recurtion to remove the node from right if larger value
-    } else {
-        if (root->left == nullptr && root->right == nullptr) {
-            delete root;
-            return nullptr;
+    if (node == nullptr) {
+        return root;  
+    }
+
+    firstColor = node->color;
+
+    Node* y = nullptr;  // the value that will be removed
+
+    if (node->left == nullptr) { //theres no left child so it replaces it with right child
+        x = node->right;
+        xParent = node->parent;
+
+        if (x != nullptr) {
+            x->parent = node->parent;
         }
-        else if (root->left == nullptr) { //replaces root with right child if need to 
-            Node* temp = root->right;
-            delete root;
-            return temp;
+
+        if (node->parent == nullptr) {
+            root = x;  
+        } else if (node == node->parent->left) {
+            node->parent->left = x;  // changes left pointer
+        } else {
+            node->parent->right = x; 
         }
-        else if (root->right == nullptr) { //replaces root with left child if need to 
-            Node* temp = root->left;
-            delete root;
-            return temp;
+
+        y = node;  
+    } else if (node->right == nullptr) { //no right child so left child replaces
+        x = node->left;
+        xParent = node->parent;
+
+        if (x != nullptr) {
+            x->parent = node->parent;
         }
-        else {
-            Node* successor = getSuccessor(root); //replaces with the succersor if both exist inorder succersor
-        if (successor != nullptr) {  
-                root->data = successor->data;
-                root->right = remove(root->right, successor->data);
+
+        if (node->parent == nullptr) {
+            root = x;  
+        } else if (node == node->parent->left) { //same idea as other case
+            node->parent->left = x;  
+        } else {
+            node->parent->right = x; 
+        }
+
+        y = node;  
+    } else { //when the node has both childern so we use successor
+        Node* successor = getSuccessor(node);
+        firstColor = successor->color;  
+        x = successor->right;  
+
+        if (successor->parent == node) { //succersor is child of the node we delete
+            if (x != nullptr) {
+                x->parent = successor;
+            }
+            xParent = successor;
+        } else { 
+            if (x != nullptr) {
+                x->parent = successor->parent;
+            }
+            successor->parent->left = x;  // replace successor with  right child
+
+            successor->right = node->right;
+            if (successor->right != nullptr) {
+                successor->right->parent = successor;
             }
         }
+
+        if (node->parent == nullptr) { //replaces with succser in tree
+            root = successor;  
+        } else if (node == node->parent->left) {
+            node->parent->left = successor;
+        } else {
+            node->parent->right = successor;
+        }
+        
+        successor->parent = node->parent;
+        successor->left = node->left;
+        if (successor->left != nullptr) {
+            successor->left->parent = successor;
+        }
+
+        successor->color = node->color; //copies og node color to the succesor
+
+        y = node;  // Node to delete is original node
     }
-    return root;
+
+    delete y;  
+
+   
+    if (firstColor == false) { //if node was black use fixRemove
+        fixRemove(root, x, xParent);
+    }
+
+    return root;  
 }
+
 
 Node* search(Node* root, int value) { //searchs for a value in binary search tree
     if (root == nullptr || root->data == value) {
